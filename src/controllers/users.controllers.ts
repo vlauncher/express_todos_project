@@ -54,13 +54,13 @@ export class UserController {
    * @param {Response} res - Express response object.
    * @param {NextFunction} next - Express next middleware function.
    */
-  public verifyEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { token } = req.params;
-      const user = await this.userService.verifyEmail(token);
-      res.status(200).json({ message: 'Email verified successfully', user });
-    } catch (error) {
-      next(error);
+      const { email, code } = req.body;
+      const user = await this.userService.verifyEmail(code, email);
+      res.status(200).json({ message: 'Email verified', user });
+    } catch (err) {
+      next(err);
     }
   }
 

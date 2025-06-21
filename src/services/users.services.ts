@@ -6,12 +6,13 @@ import {
   createEmailVerificationToken, 
   verifyToken,
 } from '../utils/tokens';
-import { 
-  sendEmailVerification, 
-  sendForgotPasswordCode, 
-  sendResetPasswordConfirmation, 
-  sendEmailVerificationSuccess 
+import {
+  sendEmailVerificationCode,
+  sendEmailVerificationSuccess,
+  sendForgotPasswordCode,
+  sendResetPasswordConfirmation
 } from '../utils/emails';
+
 
 export class UserService {
 
@@ -31,16 +32,17 @@ export class UserService {
     if(!userData.first_name || !userData.last_name || !userData.email || !userData.password){
       throw new Error('All fields are required');
     }
-    const existingUser = await User.findOne({ email: userData.email });
-    if (existingUser) {
-      throw new Error('Email already registered');
-    }
-    const newUser: any = new User(userData);
+    const existing = await User.findOne({ email: userData.email });
+    if (existing) throw new Error('Email already registered');
+
+    const newUser = new User(userData);
+    // generate a 6-digit email OTP
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    newUser.emailVerificationCode    = code;
+    newUser.emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000);
     await newUser.save();
 
-    const emailToken = createEmailVerificationToken({ id: newUser._id, email: newUser.email });
-    console.log('Email verification token:', emailToken);
-    await sendEmailVerification(newUser.email, emailToken);
+    await sendEmailVerificationCode(newUser.email, code);
     return newUser;
   }
 
@@ -88,34 +90,33 @@ export class UserService {
    * @returns {Promise<IUser>} - The updated user document.
    * @throws {Error} - If the token is invalid/expired or the user is not found.
    */
-  public async verifyEmail(token: string): Promise<IUser> {
-    const decoded = verifyToken<{ id: string; email: string }>(token);
-    if (!decoded) {
-      throw new Error('Invalid or expired token');
-    }
-    const user = await User.findById(decoded.id);
-    if (!user) {
-      throw new Error('User not found');
-    }
-    if (user.verified) {
-      throw new Error('Email already verified');
-    }
+  public async verifyEmail(code: string, email: string): Promise<IUser> {
+    const user = await User.findOne({
+      email,
+      emailVerificationCode: code,
+      emailVerificationExpires: { $gte: new Date() }
+    });
+    if (!user) throw new Error('Invalid or expired verification code');
+
     user.verified = true;
+    user.emailVerificationCode = undefined;
+    user.emailVerificationExpires = undefined;
     await user.save();
-    await sendEmailVerificationSuccess(user.email);
-    // Create a profile for the user if one does not exist
-    const existingProfile = await Profile.findOne({ user: user._id });
-    if (!existingProfile) {
+
+    // optional: create Profile if none
+    const exists = await Profile.findOne({ user: user._id });
+    if (!exists) {
       await Profile.create({
         user: user._id,
-        username: user.first_name, // default username can be adjusted
-        gender: 'male', // or derive from user data if available
-        address: '',
+        username: user.first_name,
+        gender: 'male',
+        address: ''
       });
     }
+
+    await sendEmailVerificationSuccess(user.email);
     return user;
   }
-
   /**
    * Generates a 6-digit code, stores it on the user with an expiration,
    * and sends the code via email.
