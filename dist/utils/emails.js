@@ -4,19 +4,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendForgotPasswordCode = exports.sendResetPasswordConfirmation = exports.sendEmailVerificationSuccess = exports.sendEmailVerificationCode = void 0;
-const nodemailer_1 = __importDefault(require("nodemailer"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const queue_1 = __importDefault(require("./queue"));
 dotenv_1.default.config();
-const transporter = nodemailer_1.default.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS,
-    },
-});
 const FRONTEND_URL = `http://localhost:8000/api/v1/auth`;
+// Enqueue email job instead of sending directly
 const sendEmail = async (options) => {
-    await transporter.sendMail({
+    await queue_1.default.add('send-email', {
         from: `"Express Todo" <${process.env.GMAIL_USER}>`,
         to: options.to,
         subject: options.subject,
