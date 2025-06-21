@@ -16,6 +16,9 @@ connectDB();
 
 // Routes
 import userRoutes from './routes/users.routes';
+import todoRoutes from './routes/todos.routes';
+
+app.use('/api/v1/todos', todoRoutes);
 app.use('/api/v1/auth', userRoutes);
 
 

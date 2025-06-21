@@ -28,16 +28,13 @@ const sendEmail = async (options: EmailOptions): Promise<void> => {
     html: options.html,
   });
 }
-
-export const sendEmailVerification = async (email: string, token: string): Promise<void> => {
-  const verifyUrl = `${FRONTEND_URL}/verify-email/${token}`;
+export const sendEmailVerificationCode = async (email: string, code: string) => {
   await sendEmail({
     to: email,
-    subject: 'Verify your email address',
-    html: `<p>Thanks for creating an account! To complete your registration, please verify your email address by clicking <a href="${verifyUrl}">this link</a>.</p>`,
+    subject: 'Your Email Verification Code',
+    html: `<p>Your verification code is <strong>${code}</strong>. It expires in 10 minutes.</p>`,
   });
 }
-
 export const sendEmailVerificationSuccess = async (email: string): Promise<void> => {
   await sendEmail({
     to: email,
