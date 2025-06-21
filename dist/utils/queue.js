@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const bullmq_1 = require("bullmq");
 const ioredis_1 = __importDefault(require("ioredis"));
 // Create a dedicated ioredis client for BullMQ
-const bullRedisClient = new ioredis_1.default(process.env.REDIS_URL || 'redis://localhost:6379', {
+const bullRedisClient = new ioredis_1.default(process.env.REDIS_URL, {
     maxRetriesPerRequest: null, // Required by BullMQ
     retryStrategy: (times) => {
         if (times > 10) {

@@ -2,7 +2,7 @@ import { Queue } from 'bullmq';
 import Redis from 'ioredis';
 
 // Create a dedicated ioredis client for BullMQ
-const bullRedisClient = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+const bullRedisClient = new Redis(process.env.REDIS_URL as any, {
   maxRetriesPerRequest: null, // Required by BullMQ
   retryStrategy: (times) => {
     if (times > 10) {
