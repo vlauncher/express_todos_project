@@ -9,7 +9,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const ioredis_1 = __importDefault(require("ioredis"));
 dotenv_1.default.config();
 // Create a dedicated ioredis client for BullMQ
-const bullRedisClient = new ioredis_1.default(process.env.REDIS_URL || 'redis://localhost:6379', {
+const bullRedisClient = new ioredis_1.default(process.env.REDIS_URL, {
     maxRetriesPerRequest: null, // Required by BullMQ
     retryStrategy: (times) => {
         if (times > 10) {

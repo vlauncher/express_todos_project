@@ -5,7 +5,7 @@ class RedisClient {
   private isConnected: boolean = false;
 
   constructor() {
-    this.client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+    this.client = new Redis(process.env.REDIS_URL as any, {
       maxRetriesPerRequest: 10,
       retryStrategy: (times) => {
         if (times > 10) {
