@@ -1,20 +1,18 @@
-import { createClient, RedisClientType } from 'redis';
+import Redis from 'ioredis';
 
 class RedisClient {
-  private client: RedisClientType;
+  private client: Redis;
   private isConnected: boolean = false;
 
   constructor() {
-    this.client = createClient({
-      url: process.env.REDIS_URL || 'redis://localhost:6379',
-      socket: {
-        reconnectStrategy: (retries) => {
-          if (retries > 10) {
-            console.error('Redis: Too many reconnection attempts');
-            return new Error('Too many reconnection attempts');
-          }
-          return Math.min(retries * 100, 3000); // Exponential backoff
-        },
+    this.client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+      maxRetriesPerRequest: 10,
+      retryStrategy: (times) => {
+        if (times > 10) {
+          console.error('Redis: Too many reconnection attempts');
+          return null; // Stop retrying
+        }
+        return Math.min(times * 100, 3000); // Exponential backoff
       },
     });
 
@@ -44,7 +42,7 @@ class RedisClient {
   }
 
   // Get the Redis client instance
-  public getClient(): RedisClientType {
+  public getClient(): Redis {
     return this.client;
   }
 
@@ -53,10 +51,13 @@ class RedisClient {
     return this.isConnected;
   }
 
-  // Connect to Redis
+  // Connect to Redis (ioredis connects automatically, but expose for consistency)
   public async connect(): Promise<void> {
     if (!this.isConnected) {
-      await this.client.connect();
+      await this.client.connect().catch((err) => {
+        console.error('Redis: Connection failed:', err);
+        throw err;
+      });
     }
   }
 

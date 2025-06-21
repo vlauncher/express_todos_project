@@ -37,7 +37,7 @@ export class TodosService {
 
     // Store in cache if Redis is available
     if (redisClient.isReady()) {
-      await redisClient.getClient().setEx(cacheKey, this.CACHE_TTL, JSON.stringify(todos));
+      await redisClient.getClient().set(cacheKey, JSON.stringify(todos), 'EX', this.CACHE_TTL);
     }
 
     return todos;
@@ -61,7 +61,7 @@ export class TodosService {
 
     if (todo && redisClient.isReady()) {
       // Store in cache
-      await redisClient.getClient().setEx(cacheKey, this.CACHE_TTL, JSON.stringify(todo));
+      await redisClient.getClient().set(cacheKey, JSON.stringify(todo), 'EX', this.CACHE_TTL);
     }
 
     return todo;
